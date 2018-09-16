@@ -1,12 +1,19 @@
 /*
  */
 let fps = 30;
-let view_angle = 0.0;
-let camera_distance = 1000;
+let view_angle = 0;
+let rotate_angle = 0;
+
+let camera_distance = 500;
+let camera_height = 250;
+let camera_pos;
+
 let num_cities = 5; // per side, so num_cities^2 - 1
-let city_size = camera_distance / num_cities;
+let city_size = 200;
+let world_size = num_cities * city_size;
 let rock;
 let cities;
+let target;
 
 
 class City
@@ -49,14 +56,14 @@ class Rock
         constructor() {
                 // pick a random starting position
 		this.s = createVector(
-			random(-camera_distance,camera_distance),
-			random(-camera_distance,camera_distance),
-			camera_distance/2
+			random(-world_size*2,world_size*2),
+			random(-world_size*2,world_size*2),
+			camera_height * 2
 		);
 		this.p = this.s.copy();
 		let t = createVector(
-			random(-camera_distance/2, camera_distance/2),
-			random(-camera_distance/2, camera_distance/2),
+			random(-world_size, world_size),
+			random(-world_size, world_size),
 			0
 		);
 
@@ -91,9 +98,11 @@ class Rock
 
 function setup()
 {
+	camera_pos = createVector(0,0,0);
 	createCanvas(windowWidth, windowHeight, WEBGL);
 	background(0);
 	frameRate(fps);
+	view_angle = PI/4;
 
 	cities = [];
 
@@ -109,32 +118,92 @@ function setup()
 	}
 }
 
-//function keyReleased() { }
-//function keyPressed() { }
-//function mousePressed() { }
+function keyReleased() 
+{
+	if (keyCode == LEFT_ARROW || keyCode == RIGHT_ARROW)
+		rotate_angle = 0;
+}
+
+function keyPressed()
+{
+	if (keyCode == LEFT_ARROW)
+		rotate_angle = -1;
+	else
+	if (keyCode == RIGHT_ARROW)
+		rotate_angle = +1;
+	else
+	if (key == ' ')
+		view_angle = 0;
+}
+
+// function mouseWheel(event) -- event.delta has the speed of rotation
+
+function mousePressed()
+{
+	// translate the mouse screen XY into an world XYZ coordinate
+	let mx = (mouseX - windowWidth/2) / (windowWidth/2);
+	let my = (mouseY - windowHeight/2) / (windowHeight/2);
+
+	let fov_y = 30 * PI / 180;
+	let fov_x = fov_y * windowWidth / windowHeight;
+
+	// the viewpoint is 2*camera_distance away and camera_height below
+	let tilt = -atan2(-camera_height, 2 * camera_distance) + my * fov_y;
+
+	target = createVector(
+		camera_distance * cos(tilt),
+		camera_distance * sin(mx * fov_x),
+		camera_distance * sin(tilt)
+	);
+	
+
+	let tx = camera_pos.x + ( target.x * cos(view_angle+PI) - target.y * sin(view_angle+PI) );
+	let ty = camera_pos.y + ( target.x * sin(view_angle+PI) + target.y * cos(view_angle+PI) );
+	let tz = camera_pos.z - target.z;
+
+	console.log(mx + "," + my + " => " + tx + "," + ty + "," + tz);
+	target = createVector(tx,ty,tz);
+
+	return false;
+}
 
 
 function draw()
 {
-	view_angle = view_angle + 0.01;
+	view_angle = view_angle + rotate_angle * (1.0/fps);
 	if (view_angle > 2*PI)
 		view_angle -= 2*PI;
+	if (view_angle < 0)
+		view_angle += 2*PI;
 
 	background(0);
 
+	camera_pos.x = camera_distance*cos(view_angle);
+	camera_pos.y = camera_distance*sin(view_angle);
+	camera_pos.z = camera_height;
+
 	camera(
-		camera_distance*sin(view_angle), camera_distance*cos(view_angle), camera_distance/2,
-		0, 0, 0, // look at the center of the board
+		camera_pos.x, camera_pos.y, camera_pos.z,
+		camera_distance*cos(view_angle+PI), camera_distance*sin(view_angle+PI), 0,
 		0, 0, -1, // up is positive Z, but this reference frame is wrong
 	);
 
 	fill(0);
 
+	if (target)
+	{
+		push();
+		stroke(255,0,80);
+		translate(target.x, target.y, target.z);
+		sphere(20);
+		pop();
+	}
+
 	push();
 	strokeWeight(1);
 	stroke(255,255,255);
 	translate(0,0,-city_size/4-5);
-	box(camera_distance, camera_distance, 2);
+	box(world_size, world_size, 2);
 	pop();
 
 	if (!rock)
@@ -152,8 +221,8 @@ function draw()
 
 console.log(rock.p.x + "," + rock.p.y);
 		// if there is a city there, decrement its health
-		let cx = int((rock.p.x+camera_distance/2) / city_size);
-		let cy = int((rock.p.y+camera_distance/2) / city_size);
+		let cx = int((rock.p.x+world_size/2) / city_size);
+		let cy = int((rock.p.y+world_size/2) / city_size);
 		if (cx >= 0 && cy >= 0 && cx < num_cities && cy < num_cities)
 			cities[cx][cy].health -= 7;
 
@@ -167,7 +236,7 @@ console.log(rock.p.x + "," + rock.p.y);
 	}
 
 	push();
-	translate(-camera_distance/2, -camera_distance/2, -city_size/4);
+	translate(-world_size/2, -world_size/2, -city_size/4);
 	for(let x = 0 ; x < num_cities ; x++)
 	{
 		for(let y = 0 ; y < num_cities ; y++)
