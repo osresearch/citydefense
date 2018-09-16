@@ -74,6 +74,13 @@ class Rock
 	}
 
 	draw() {
+		if (this.p.z > 100)
+			stroke(0,255,0);
+		else
+		if (this.p.z > 50)
+			stroke(255,255,0);
+		else
+			stroke(255,0,0);
 		line(
 			this.s.x, this.s.y, this.s.z,
 			this.p.x, this.p.y, this.p.z
@@ -126,8 +133,8 @@ function draw()
 	push();
 	strokeWeight(1);
 	stroke(255,255,255);
-	translate(0,0,-11);
-	box(camera_distance, camera_distance, 10);
+	translate(0,0,-city_size/4-5);
+	box(camera_distance, camera_distance, 2);
 	pop();
 
 	if (!rock)
@@ -160,7 +167,7 @@ console.log(rock.p.x + "," + rock.p.y);
 	}
 
 	push();
-	translate(-camera_distance/2, -camera_distance/2, 0);
+	translate(-camera_distance/2, -camera_distance/2, -city_size/4);
 	for(let x = 0 ; x < num_cities ; x++)
 	{
 		for(let y = 0 ; y < num_cities ; y++)
