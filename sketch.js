@@ -56,18 +56,18 @@ class Rock
         constructor() {
                 // pick a random starting position
 		this.s = createVector(
-			random(-world_size*2,world_size*2),
-			random(-world_size*2,world_size*2),
+			random(-world_size,world_size),
+			random(-world_size,world_size),
 			camera_height * 2
 		);
 		this.p = this.s.copy();
-		let t = createVector(
-			random(-world_size, world_size),
-			random(-world_size, world_size),
+		this.t = createVector(
+			random(-world_size/2, world_size/2),
+			random(-world_size/2, world_size/2),
 			0
 		);
 
-		this.v = p5.Vector.sub(t, this.p).setMag(random(1,10));
+		this.v = p5.Vector.sub(this.t, this.p).setMag(random(1,10));
 	}
 
 	step(dt) {
@@ -92,6 +92,12 @@ class Rock
 			this.s.x, this.s.y, this.s.z,
 			this.p.x, this.p.y, this.p.z
 		);
+
+		push();
+		translate(this.t.x, this.t.y, this.t.z+city_size/4);
+		stroke(255,0,0,40);
+		sphere(10);
+		pop();
 	}
 }
 
@@ -151,9 +157,9 @@ function mousePressed()
 	let tilt = -atan2(-camera_height, 2 * camera_distance) + my * fov_y;
 
 	target = createVector(
-		camera_distance * cos(tilt),
-		camera_distance * sin(mx * fov_x),
-		camera_distance * sin(tilt)
+		1.2 * camera_distance * cos(tilt),
+		1.2 * camera_distance * sin(mx * fov_x),
+		1.2 * camera_distance * sin(tilt)
 	);
 	
 
